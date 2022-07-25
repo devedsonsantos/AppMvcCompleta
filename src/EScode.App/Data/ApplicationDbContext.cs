@@ -10,6 +10,6 @@ namespace EScode.App.Data
             : base(options)
         {
         }
-        public DbSet<EScode.App.ViewModels.ProdutoViewModel> ProdutoViewModel { get; set; }
+        public DbSet<EScode.App.ViewModels.EnderecoViewModel> EnderecoViewModel { get; set; }
     }
 }

@@ -53,7 +53,12 @@ namespace EScode.App.Controllers
             if (!ModelState.IsValid)
                 return View(produtoViewModel);
 
+            var imgPrefix = Guid.NewGuid() + "_";
 
+            if (!await UploadArquivo(produtoViewModel.ImagemUpload, imgPrefix))
+                return View(produtoViewModel);
+
+            produtoViewModel.Imagem = imgPrefix + produtoViewModel.ImagemUpload.FileName;
             await _produtoRepository.Adicionar(_mapper.Map<Produto>(produtoViewModel));
 
             return RedirectToAction(nameof(Index));
@@ -110,16 +115,35 @@ namespace EScode.App.Controllers
         private async Task<ProdutoViewModel> ObterProduto(Guid id)
         {
             var produto = _mapper.Map<ProdutoViewModel>(await _produtoRepository.ObterPorId(id));
-            produto.Fornecedores = _mapper.Map<IEnumerable<FornecedorViewModel>>(await _produtoRepository.ObterTodos());
+            produto.Fornecedores = _mapper.Map<IEnumerable<FornecedorViewModel>>(await _fornecedorRepository.ObterTodos());
 
             return produto;
         }
 
         private async Task<ProdutoViewModel> PopularFornecedores(ProdutoViewModel produto)
         {
-            produto.Fornecedores = _mapper.Map<IEnumerable<FornecedorViewModel>>(await _produtoRepository.ObterTodos());
+            produto.Fornecedores = _mapper.Map<IEnumerable<FornecedorViewModel>>(await _fornecedorRepository.ObterTodos());
 
             return produto;
+        }
+
+        private async Task<bool> UploadArquivo(IFormFile file, string imgPrefix)
+        {
+            if (file.Length <= 0) return false;
+
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagens", imgPrefix + file.FileName);
+
+            if (System.IO.File.Exists(path))
+            {
+                ModelState.AddModelError(String.Empty, "Já existe um arquivo com este nome!");
+                return false;
+            }
+
+            using (var stream = new FileStream(path, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+            return true;
         }
     }
 }
