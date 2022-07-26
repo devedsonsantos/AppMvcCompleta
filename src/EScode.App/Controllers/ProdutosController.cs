@@ -80,10 +80,27 @@ namespace EScode.App.Controllers
             if (id != produtoViewModel.Id)
                 return NotFound();
 
+            var produtoAtualizar = await ObterProduto(id);
+            produtoViewModel.Fornecedor = produtoAtualizar.Fornecedor;
+            produtoViewModel.Imagem = produtoAtualizar.Imagem;
             if (!ModelState.IsValid)
                 return View(produtoViewModel);
 
-            await _produtoRepository.Atualizar(_mapper.Map<Produto>(produtoViewModel));
+            if(produtoViewModel.ImagemUpload != null)
+            {
+                var imgPrefix = Guid.NewGuid() + "_";
+                if (!await UploadArquivo(produtoViewModel.ImagemUpload, imgPrefix))
+                    return View(produtoViewModel);
+
+                produtoAtualizar.Imagem = imgPrefix + produtoViewModel.ImagemUpload.FileName;
+            }
+
+            produtoAtualizar.Nome = produtoViewModel.Nome;
+            produtoAtualizar.Valor = produtoViewModel.Valor;
+            produtoAtualizar.Descricao = produtoViewModel.Descricao;
+            produtoAtualizar.Ativo = produtoViewModel.Ativo;
+
+            await _produtoRepository.Atualizar(_mapper.Map<Produto>(produtoAtualizar));
 
             return RedirectToAction(nameof(Index));
         }
@@ -114,7 +131,7 @@ namespace EScode.App.Controllers
 
         private async Task<ProdutoViewModel> ObterProduto(Guid id)
         {
-            var produto = _mapper.Map<ProdutoViewModel>(await _produtoRepository.ObterPorId(id));
+            var produto = _mapper.Map<ProdutoViewModel>(await _produtoRepository.ObterProdutoFornecedor(id));
             produto.Fornecedores = _mapper.Map<IEnumerable<FornecedorViewModel>>(await _fornecedorRepository.ObterTodos());
 
             return produto;

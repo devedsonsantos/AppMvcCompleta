@@ -5,7 +5,11 @@ namespace EScode.Data.Context
 {
     public class EScodeDbContext : DbContext
     {
-        public EScodeDbContext(DbContextOptions options) : base(options) { }
+        public EScodeDbContext(DbContextOptions options) : base(options)
+        {
+            ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+            ChangeTracker.AutoDetectChangesEnabled = false;
+        }
 
         public DbSet<Produto> Produtos { get; set; }
         public DbSet<Fornecedor> Fornecedores { get; set; }
